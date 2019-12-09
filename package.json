@@ -1,0 +1,16 @@
+{
+  "name": "fideliting-api",
+  "version": "1.0.0",
+  "description": "Fideliting API to connect between web or apps to the fideliting blockchain network",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "api",
+    "blockchain",
+    "restfull"
+  ],
+  "author": "Adria Marti Blasco",
+  "license": "ISC"
+}
