@@ -4,7 +4,8 @@
   "description": "Fideliting API to connect between web or apps to the fideliting blockchain network",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "nodemon index.js"
   },
   "keywords": [
     "api",
@@ -12,5 +13,18 @@
     "restfull"
   ],
   "author": "Adria Marti Blasco",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/joi": "^16.1.8",
+    "bcryptjs": "^2.4.3",
+    "cryptr": "^6.0.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.7.14",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.1"
+  }
 }
