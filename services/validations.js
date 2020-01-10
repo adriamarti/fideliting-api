@@ -15,12 +15,12 @@ const userRegisterValidationPayload = (data) => {
     email: Joi.string().email().required(),
     password: Joi.string().required(),
     type: Joi.string().valid('customer', 'business').required(),
-    address: Joi.string().required(),
+    status: Joi.string().valid('inactive', 'active').required(),
+    address: Joi.string(),
   }).required();
 
   return schema.validate(data);
 };
-
 
 // User Login Validation
 const userLoginValidationRequestPayload = (data) => {

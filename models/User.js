@@ -17,9 +17,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  address: {
+  status: {
     type: String,
     required: true,
+  },
+  address: {
+    type: String,
+    required: false,
   },
 }, {
   timestamps: true

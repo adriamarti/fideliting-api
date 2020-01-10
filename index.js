@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 // Import Routes
-const authRoute = require('./routes/auth');
+const userRoute = require('./routes/user');
 const randomRoute = require('./routes/random');
 
 // Add Express to App
@@ -27,7 +27,7 @@ app.use(express.json());
 
 
 // Route Middlewares
-app.use('/api/user', authRoute);
+app.use('/api/user', userRoute);
 app.use('/api/random', randomRoute);
 
 app.listen(3000, () => console.log('Server up and running'))

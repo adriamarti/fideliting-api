@@ -14,9 +14,6 @@ const createAccount = async (password = {}) => {
   
     const accountAddressData = await response.json();
 
-    console.log('-----------------');
-    console.log(accountAddressData);
-    console.log('-----------------');
     return accountAddressData;
   } catch (err) {
     throw(err);

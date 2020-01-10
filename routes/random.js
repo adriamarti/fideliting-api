@@ -1,8 +1,9 @@
 const router = require('express').Router();
-const verifyToken = require('./verifyToken')
+
+const { verifyLoginToken } = require('../middlewares/verifyToken');
 
 // RANDOM
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyLoginToken, async (req, res) => {
   res.json(req.user);
 })
 
