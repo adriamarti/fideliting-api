@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: false,
+    required: true,
   },
   type: {
     type: String,
@@ -21,7 +21,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  address: {
+  stellarAccount: {
+    type: String,
+    required: false,
+  },
+  stellarSeed: {
     type: String,
     required: false,
   },

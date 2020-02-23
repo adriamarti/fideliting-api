@@ -5,7 +5,7 @@ const tokenHasExpired = (expiration) => {
 }
 
 const verifyRegisterToken = (req, res, next) => {
-  const { token } = req.params.token;
+  const { token } = req.params;
 
   if (!token) {
     return res.status(401).send({

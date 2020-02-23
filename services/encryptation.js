@@ -1,12 +1,13 @@
-const Cryptr = require('cryptr');
-const cryptr = new Cryptr('i/DAc)SW3Pvf%p)P1D5f8fhwaV7P?$SA');
+const CryptoJS = require("crypto-js");
 
-const encrypt = (string) => {
-  return cryptr.encrypt(string);
+const encrypt = (string, secret) => {
+  return CryptoJS.AES.encrypt(string, secret);
 };
 
-const decrypt = (string) => {
-  return cryptr.decrypt(string);
+const decrypt = (string, secret) => {
+  const bytes = CryptoJS.AES.decrypt(string, secret);
+
+  return bytes.toString(CryptoJS.enc.Utf8);
 };
 
 module.exports = {
