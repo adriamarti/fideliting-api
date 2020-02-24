@@ -21,6 +21,7 @@ const { sendConfirmRegistrationMail } = require('../services/send-mail');
 const { encrypt, decrypt } = require('../services/encryptation');
 const { createAccount } = require('../stellar/accounts');
 const { buyFidels } = require('../stellar/buy');
+const { getBalance } = require('../stellar/balance');
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -120,11 +121,9 @@ router.patch('/buy-fidels/:id', async (req, res) => {
 
     if (!company) {
       return res.status(400).send({
-        message: 'Company with does not exist',
+        message: 'Company does not exist',
       });
     };
-
-    console.log(company)
 
     const buyFidelsTransaction = await buyFidels(company.stellarAcount.privateKey, req.body.amount);
 
@@ -135,7 +134,30 @@ router.patch('/buy-fidels/:id', async (req, res) => {
     console.log(err);
     return res.status(400).send(err);
   }
-  
+})
+
+// GET COMPANY BALANCE
+router.get('/balance/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const company = await Company.findById(id);
+
+    if (!company) {
+      return res.status(400).send({
+        message: 'Company does not exist',
+      });
+    };
+
+    const companyBalance = await getBalance(company.stellarAcount.publicKey);
+
+    // @ TODO return not all data from transaction
+    return res.status(200).send(companyBalance);
+
+  } catch(err) {
+    console.log(err);
+    return res.status(400).send(err);
+  }
 })
 
 module.exports = router;

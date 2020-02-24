@@ -27,9 +27,9 @@ const buyFidels = async (companySecret, amount) => {
       source: companyKeyPair.publicKey(),
     }));
     
-    transactionBuilder.addOperation(Operation.payment({ 
+    transactionBuilder.addOperation(Operation.payment({
+      asset: new Asset('FIDEL', process.env.STELLAR_FIDEL_PUBLIC), 
       destination: companyKeyPair.publicKey(),
-      asset: new Asset('FIDEL', process.env.STELLAR_FIDEL_PUBLIC),
       amount,
     }));
 
