@@ -6,6 +6,7 @@ const Company = require('../models/Company');
 const {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
+  companyBuyFidelValidationRequestPayload,
   userRegisterValidationRequestPayload,
   userRegisterValidationPayload,
   userLoginValidationRequestPayload,
@@ -19,6 +20,7 @@ const {
 const { sendConfirmRegistrationMail } = require('../services/send-mail');
 const { encrypt, decrypt } = require('../services/encryptation');
 const { createAccount } = require('../stellar/accounts');
+const { buyFidels } = require('../stellar/buy');
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -67,16 +69,8 @@ router.post('/register', async (req, res) => {
 })
 
 // REGISTER CONFIRMATION
-
 router.patch('/register-confirmation/:token', verifyRegisterToken, async (req, res) => {
   try {
-    // @todo código de Ignacio para obtener clave públilca y privada
-    // const dataToUpdate = {
-    //   status: 'active',
-    //   stellarAccount: keypair.publicKey(),
-    //   stellarSeed: encrypt(keypair.secret(), process.env.STELLAR_ENCRYPT_SECRET),
-    // }
-
     // Validate request data
     const validateCompanyData = companyRegisterConfirmationValidationRequestPayload(req.body);
     if (validateCompanyData.error) {
@@ -103,12 +97,45 @@ router.patch('/register-confirmation/:token', verifyRegisterToken, async (req, r
     const update = { $set: dataToUpdate };
     const updatedCompany = await Company.updateOne(query, update);
     
-    // @ TODO return not all data from user
+    // @ TODO return not all data from company
     return res.status(200).send(updatedCompany);
   } catch (err) {
     console.log(err);
     return res.status(400).send(err);
   }
+})
+
+// BUY FIDELS
+router.patch('/buy-fidels/:id', async (req, res) => {
+  try {
+    // Validate request data
+    const validateBuyData = companyBuyFidelValidationRequestPayload(req.body);
+    if (validateBuyData.error) {
+      return res.status(400).send(validateCompanyData.error);
+    }
+
+    const { id } = req.params;
+
+    const company = await Company.findById(id);
+
+    if (!company) {
+      return res.status(400).send({
+        message: 'Company with does not exist',
+      });
+    };
+
+    console.log(company)
+
+    const buyFidelsTransaction = await buyFidels(company.stellarAcount.privateKey, req.body.amount);
+
+    // @ TODO return not all data from transaction
+    return res.status(200).send(buyFidelsTransaction);
+
+  } catch(err) {
+    console.log(err);
+    return res.status(400).send(err);
+  }
+  
 })
 
 module.exports = router;
