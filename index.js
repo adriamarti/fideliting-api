@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 // Import 
 
 // Import Routes
-const userRoute = require('./routes/user');
+const companyRoute = require('./routes/company');
 const randomRoute = require('./routes/random');
 
 // Add Express to App
@@ -29,7 +29,7 @@ app.use(express.json());
 
 
 // Route Middlewares
-app.use('/api/user', userRoute);
+app.use('/api/company', companyRoute);
 app.use('/api/random', randomRoute);
 
 app.listen(3000, () => console.log('Server up and running'))

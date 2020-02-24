@@ -1,5 +1,26 @@
 const Joi = require('@hapi/joi');
 
+const companyRegisterValidationRequestPayload = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+    name: Joi.string().required(),
+  }).required();
+
+  return schema.validate(data);
+};
+
+const companyRegisterConfirmationValidationRequestPayload = (data) => {
+  const schema = Joi.object({
+    location: Joi.string().required(),
+    nif: Joi.string().required(),
+    phone: Joi.string().required(),
+    sector: Joi.string().required(),
+  }).required();
+
+  return schema.validate(data);
+};
+
 const userRegisterValidationRequestPayload = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
@@ -51,6 +72,8 @@ const userLoginValidationRequestPayload = (data) => {
 };
 
 module.exports = {
+  companyRegisterValidationRequestPayload,
+  companyRegisterConfirmationValidationRequestPayload,
   userRegisterValidationRequestPayload,
   userRegisterValidationPayload,
   userConfirmRegisterValidationRequestPayload,
