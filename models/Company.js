@@ -16,29 +16,25 @@ const copmanySchema = new mongoose.Schema({
   location: {
     type: String,
     required: false,
-    default: '',
   },
   nif: {
     type: String,
     required: false,
-    default: '',
   },
   phone: {
     type: String,
     required: false,
-    default: '',
   },
   sector: {
     type: String,
     required: false,
-    default: '',
   },
   status: {
     type: String, // active, inactive, banned
     required: true,
   },
   stellarAcount: {
-    type: Object,
+    type: String,
     required: false,
   }
 }, {

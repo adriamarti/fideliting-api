@@ -27,7 +27,6 @@ mongoose.connect(
 // Middlewares
 app.use(express.json());
 
-
 // Route Middlewares
 app.use('/api/company', companyRoute);
 app.use('/api/random', randomRoute);

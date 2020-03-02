@@ -15,7 +15,9 @@ const {
 const { verifyRegisterToken } = require('../middlewares/verifyToken');
 const {
   getLoggedToken,
+  getStellarAccountToken,
   getRegistrationToken,
+  verifyToken,
 } = require('../services/token');
 const { sendConfirmRegistrationMail } = require('../services/send-mail');
 const { encrypt, decrypt } = require('../services/encryptation');
@@ -87,10 +89,7 @@ router.patch('/register-confirmation/:token', verifyRegisterToken, async (req, r
       sector: req.body.sector,
       location: req.body.location,
       nif: req.body.nif,
-      stellarAcount: {
-        publicKey,
-        privateKey,
-      }
+      stellarAcount: getStellarAccountToken(publicKey, privateKey),
     }
 
     // Update Company Data
@@ -125,7 +124,9 @@ router.patch('/buy-fidels/:id', async (req, res) => {
       });
     };
 
-    const buyFidelsTransaction = await buyFidels(company.stellarAcount.privateKey, req.body.amount);
+    const { privateKey } = verifyToken(company.stellarAcount)
+
+    const buyFidelsTransaction = await buyFidels(privateKey, req.body.amount);
 
     // @ TODO return not all data from transaction
     return res.status(200).send(buyFidelsTransaction);
@@ -149,7 +150,9 @@ router.get('/balance/:id', async (req, res) => {
       });
     };
 
-    const companyBalance = await getBalance(company.stellarAcount.publicKey);
+    const { publicKey } = verifyToken(company.stellarAcount)
+
+    const companyBalance = await getBalance(publicKey);
 
     // @ TODO return not all data from transaction
     return res.status(200).send(companyBalance);

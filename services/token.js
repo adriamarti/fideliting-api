@@ -16,6 +16,13 @@ const getRegistrationToken = (_id) => {
     )
 };
 
+const getStellarAccountToken = (publicKey, privateKey) => {
+  return jwt.sign(
+    { publicKey, privateKey },
+    process.env.JSON_TOKEN_SECRET,
+    )
+};
+
 const verifyToken = (token) => {
   return jwt.verify(token, process.env.JSON_TOKEN_SECRET);
 };
@@ -23,5 +30,6 @@ const verifyToken = (token) => {
 module.exports = {
   getLoggedToken,
   getRegistrationToken,
+  getStellarAccountToken,
   verifyToken,
 }
