@@ -38,18 +38,17 @@ const companyBuyFidelValidationRequestPayload = (data) => {
   return schema.validate(data);
 }
 
-const userRegisterValidationRequestPayload = (data) => {
+const clientRegisterValidationRequestPayload = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
-    name: Joi.string().required(),
     password: Joi.string().required(),
-    type: Joi.string().valid('customer', 'company').required() 
+    name: Joi.string().required(),
   }).required();
 
   return schema.validate(data);
 };
 
-const userRegisterValidationPayload = (data) => {
+const clientRegisterConfirmationValidationRequestPayload = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
     name: Joi.string().required(),
@@ -61,25 +60,7 @@ const userRegisterValidationPayload = (data) => {
   return schema.validate(data);
 };
 
-const userConfirmRegisterValidationRequestPayload = (data) => {
-  const schema = Joi.object({
-    id: Joi.string().email().required(),
-  }).required();
-
-  return schema.validate(data);
-};
-
-const userConfirmRegisterValidationPayload = (data) => {
-  const schema = Joi.object({
-    status: Joi.string().valid('active').required(),
-    stellarAccount: Joi.string().required(),
-    stellarSeed: Joi.string().required(),
-  }).required();
-
-  return schema.validate(data);
-};
-
-const userLoginValidationRequestPayload = (data) => {
+const clientLoginValidationRequestPayload = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
@@ -88,14 +69,13 @@ const userLoginValidationRequestPayload = (data) => {
   return schema.validate(data);
 };
 
+
 module.exports = {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
   companyLoginValidationRequestPayload,
   companyBuyFidelValidationRequestPayload,
-  userRegisterValidationRequestPayload,
-  userRegisterValidationPayload,
-  userConfirmRegisterValidationRequestPayload,
-  userConfirmRegisterValidationPayload,
-  userLoginValidationRequestPayload
+  clientRegisterValidationRequestPayload,
+  clientRegisterConfirmationValidationRequestPayload,
+  clientLoginValidationRequestPayload,
 }

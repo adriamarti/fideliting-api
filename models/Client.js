@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
+const clientSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
@@ -13,24 +13,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  type: {
-    type: String,
-    required: true,
-  },
   status: {
-    type: String,
+    type: String, // active, inactive, banned
     required: true,
   },
-  stellarAccount: {
+  stellarAcount: {
     type: String,
     required: false,
-  },
-  stellarSeed: {
-    type: String,
-    required: false,
-  },
+  }
 }, {
   timestamps: true
 });
 
-module.exports = mongoose.model('User', userSchema)
+module.exports = mongoose.model('Client', clientSchema)

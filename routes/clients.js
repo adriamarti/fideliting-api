@@ -1,13 +1,13 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const User = require('../models/Client');
-const Company = require('../models/Company');
+const Client = require('../models/Client');
 const {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
   companyBuyFidelValidationRequestPayload,
   companyLoginValidationRequestPayload,
-  userRegisterValidationRequestPayload,
+  clientRegisterValidationRequestPayload,
+  clientLoginValidationRequestPayload,
   userRegisterValidationPayload,
   userLoginValidationRequestPayload,
   userConfirmRegisterValidationPayload,
@@ -33,38 +33,38 @@ const { getTransactions } = require('../stellar/transactions')
 router.post('/register', async (req, res) => {
   try {
     // Validate request data
-    const validateCompanyData = companyRegisterValidationRequestPayload(req.body);
-    if (validateCompanyData.error) {
-      return res.status(400).send(validateCompanyData.error);
+    const validateClientData = clientRegisterValidationRequestPayload(req.body);
+    if (validateClientData.error) {
+      return res.status(400).send(validateClientData.error);
     }
 
     // Check if Email is already registered
-    const registeredCompany = await Company.findOne({ email: req.body.email });
-    if (registeredCompany) {
+    const registeredClient = await Client.findOne({ email: req.body.email });
+    if (registeredClient) {
       return res.status(400).send({
-        message: `Company with ${req.body.email} email is already registered`,
+        message: `Client with ${req.body.email} email is already registered`,
       });
     }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     
-    // Create company payload to be stored in DB
-    const companyPayload = {
+    // Create Client payload to be stored in DB
+    const clientPayload = {
       email: req.body.email,
       name: req.body.name,
       password: hashedPassword,
       status: 'inactive',
     };
     
-    // Save Company in the DB
-    const company = new Company(companyPayload);
-    const savedCompany = await company.save();
+    // Save Client in the DB
+    const client = new Client(clientPayload);
+    const savedClient = await client.save();
 
     console.log('---------------------------------------');
     console.log('Confirm Registration Token');
     console.log('---------------------------------------');
-    console.log(getRegistrationToken(savedCompany._id));
+    console.log(getRegistrationToken(savedClient._id));
     console.log('---------------------------------------');
 
     // Send confirmation email
@@ -74,7 +74,7 @@ router.post('/register', async (req, res) => {
     //   getRegistrationToken(savedCompany._id),
     // )
 
-    const { name, email } = savedCompany;
+    const { name, email } = savedClient;
 
     return res.status(200).send({ name, email });
   } catch (err) {
@@ -86,17 +86,11 @@ router.post('/register', async (req, res) => {
 // REGISTER CONFIRMATION
 router.patch('/register-confirmation', verifyRegisterToken, async (req, res) => {
   try {
-    // Validate request data
-    const validateCompanyData = companyRegisterConfirmationValidationRequestPayload(req.body);
-    if (validateCompanyData.error) {
-      return res.status(400).send(validateCompanyData.error);
-    }
-
-    // Check if Email is not registered
-    const registeredCompany = await Company.findById(req.user._id);
-    if (!registeredCompany) {
+    // Check if user is already registered
+    const registeredClient = await Client.findById(req.user._id);
+    if (!registeredClient) {
       return res.status(400).send({
-        message: `Company with ${req.body.email} email is not registered`,
+        message: `Your confirm registration link is invalid.`,
       });
     }
 
@@ -105,17 +99,13 @@ router.patch('/register-confirmation', verifyRegisterToken, async (req, res) => 
 
     const dataToUpdate = {
       status: 'active',
-      phone: req.body.phone,
-      sector: req.body.sector,
-      location: req.body.location,
-      nif: req.body.nif,
       stellarAcount: getStellarAccountToken(publicKey, privateKey),
     }
 
-    // Update Company Data
+    // Update Client Data
     const query = { _id: req.user._id };
     const update = { $set: dataToUpdate };
-    const updatedCompany = await Company.updateOne(query, update);
+    const updatedCompany = await Client.updateOne(query, update);
     
     return res.status(200).send(updatedCompany);
   } catch (err) {
@@ -128,21 +118,21 @@ router.patch('/register-confirmation', verifyRegisterToken, async (req, res) => 
 router.post('/login', async (req, res) => {
   try {
     // Validate request data
-    const validateCompanyData = companyLoginValidationRequestPayload(req.body);
-    if (validateCompanyData.error) {
-      return res.status(400).send(validateCompanyData.error);
+    const validateClientData = clientLoginValidationRequestPayload(req.body);
+    if (validateClientData.error) {
+      return res.status(400).send(validateClientData.error);
     }
 
     // Check if Email is not registered
-    const registeredCompany = await Company.findOne({ email: req.body.email });
-    if (!registeredCompany) {
+    const registeredClient = await Client.findOne({ email: req.body.email });
+    if (!registeredClient) {
       return res.status(400).send({
-        message: `Company with ${req.body.email} email is not registered`,
+        message: `Client with ${req.body.email} email is not registered`,
       });
     }
 
     // Check if Password is correct
-    const checkValidPassword = await bcrypt.compare(req.body.password, registeredCompany.password);
+    const checkValidPassword = await bcrypt.compare(req.body.password, registeredClient.password);
     if (!checkValidPassword) {
       return res.status(400).send({
         message: `Password is incorrect`,
@@ -150,14 +140,14 @@ router.post('/login', async (req, res) => {
     }
 
     // Create a JSON WEB TOKEN
-    const token = getLoggedToken(registeredCompany._id);
+    const token = getLoggedToken(registeredClient._id);
 
-    // Get Company balance
-    const { publicKey } = verifyToken(registeredCompany.stellarAcount);
+    // Get Client balance
+    const { publicKey } = verifyToken(registeredClient.stellarAcount);
     const balance = await getBalance(publicKey);
 
-    // Company data to be returned
-    const { _id, email, name, location, nif, phone, sector } = registeredCompany;
+    // Remove password and stellarAccount from client data
+    const { _id, email, name, location, nif, phone, sector } = registeredClient;
 
     console.log('---------------------------------------');
     console.log('Login Token');
@@ -175,51 +165,23 @@ router.post('/login', async (req, res) => {
     console.log(err);
     return res.status(400).send(err);
   }
+  
 })
 
-// BUY FIDELS
-router.patch('/buy-fidels/:id', verifyLoginToken, async (req, res) => {
-  try {
-    // Validate request data
-    const validateBuyData = companyBuyFidelValidationRequestPayload(req.body);
-    if (validateBuyData.error) {
-      return res.status(400).send(validateCompanyData.error);
-    }
-
-    const company = await Company.findById(req.user._id);
-
-    if (!company) {
-      return res.status(400).send({
-        message: 'Company does not exist',
-      });
-    };
-
-    const { privateKey } = verifyToken(company.stellarAcount)
-
-    const buyFidelsTransaction = await buyFidels(privateKey, req.body.amount);
-
-    return res.status(200).send(buyFidelsTransaction);
-
-  } catch(err) {
-    console.log(err);
-    return res.status(400).send(err);
-  }
-})
-
-// GET COMPANIES
+// GET CLIENTS
 router.get('/list', async (req, res) => {
   try {
-    const companies = await Company
+    const clients = await Client
       .find({ status: 'active' })
-      .select('-password -stellarAcount -status -nif');
+      .select('-password -stellarAcount -status');
 
-    if (!companies.length) {
+    if (!clients.length) {
       return res.status(400).send({
-        message: 'No active companies in the platform',
+        message: 'No active clients in the platform',
       });
     };
 
-    return res.status(200).send(companies);
+    return res.status(200).send(clients);
 
   } catch(err) {
     console.log(err);

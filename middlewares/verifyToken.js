@@ -48,6 +48,12 @@ const verifyLoginToken = (req, res, next) => {
       });
     }
 
+    if (req.user._id !== req.params.id) {
+      return res.status(400).send({
+        message: `Token doesn't match with user id`,
+      });
+    }
+
     return next();
   } catch(err) {
     return res.status(400).send({
