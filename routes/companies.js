@@ -1,18 +1,21 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-// const stellar = require('stellar-sdk');
 const User = require('../models/User');
 const Company = require('../models/Company');
 const {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
   companyBuyFidelValidationRequestPayload,
+  companyLoginValidationRequestPayload,
   userRegisterValidationRequestPayload,
   userRegisterValidationPayload,
   userLoginValidationRequestPayload,
   userConfirmRegisterValidationPayload,
 } = require('../services/validations');
-const { verifyRegisterToken } = require('../middlewares/verifyToken');
+const {
+  verifyRegisterToken,
+  verifyLoginToken,
+} = require('../middlewares/verifyToken');
 const {
   getLoggedToken,
   getStellarAccountToken,
@@ -24,6 +27,7 @@ const { encrypt, decrypt } = require('../services/encryptation');
 const { createAccount } = require('../stellar/accounts');
 const { buyFidels } = require('../stellar/buy');
 const { getBalance } = require('../stellar/balance');
+const { getTransactions } = require('../stellar/transactions')
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -54,15 +58,21 @@ router.post('/register', async (req, res) => {
     };
     
     // Save Company in the DB
-    const company = new Company(companyPayload)
-    const savedCompany = await company.save()
+    const company = new Company(companyPayload);
+    const savedCompany = await company.save();
+
+    console.log('---------------------------------------');
+    console.log('Confirm Registration Token');
+    console.log('---------------------------------------');
+    console.log(getRegistrationToken(savedCompany._id));
+    console.log('---------------------------------------');
 
     // Send confirmation email
-    await sendConfirmRegistrationMail(
-      savedCompany.email,
-      savedCompany.name,
-      getRegistrationToken(savedCompany._id),
-    )
+    // await sendConfirmRegistrationMail(
+    //   savedCompany.email,
+    //   savedCompany.name,
+    //   getRegistrationToken(savedCompany._id),
+    // )
 
     return res.status(200).send(savedCompany);
   } catch (err) {
@@ -72,7 +82,7 @@ router.post('/register', async (req, res) => {
 })
 
 // REGISTER CONFIRMATION
-router.patch('/register-confirmation/:token', verifyRegisterToken, async (req, res) => {
+router.patch('/register-confirmation', verifyRegisterToken, async (req, res) => {
   try {
     // Validate request data
     const validateCompanyData = companyRegisterConfirmationValidationRequestPayload(req.body);
@@ -105,8 +115,57 @@ router.patch('/register-confirmation/:token', verifyRegisterToken, async (req, r
   }
 })
 
+// LOGIN
+router.post('/login', async (req, res) => {
+  // Validate request data
+  const validateCompanyData = companyLoginValidationRequestPayload(req.body);
+  if (validateCompanyData.error) {
+    return res.status(400).send(validateCompanyData.error);
+  }
+
+  // Check if Email is not registered
+  const registeredCompany = await Company.findOne({ email: req.body.email });
+  if (!registeredCompany) {
+    return res.status(400).send({
+      message: `Company with ${req.body.email} email is not registered`,
+    });
+  }
+
+  // Check if Password is correct
+  const checkValidPassword = await bcrypt.compare(req.body.password, registeredCompany.password);
+  if (!checkValidPassword) {
+    return res.status(400).send({
+      message: `Password is incorrect`,
+    });
+  }
+
+  // Create a JSON WEB TOKEN
+  const token = getLoggedToken(registeredCompany._id);
+
+  // Get Company balance
+  const { publicKey } = verifyToken(registeredCompany.stellarAcount);
+  const balance = await getBalance(publicKey);
+
+  // console.log(registeredCompany)
+
+  // Remove password and stellarAccount from company data
+  const { _id, email, name, location, nif, phone, sector } = registeredCompany;
+
+  console.log('---------------------------------------');
+  console.log('Login Token');
+  console.log('---------------------------------------');
+  console.log(token);
+  console.log('---------------------------------------');
+
+  return res
+    .cookie('login_fideliting_token', token, {
+      expires: new Date(Date.now() + 24 * 3600000) // cookie will be removed after 24 hours
+    })
+    .send({_id, email, name, location, nif, phone, sector, balance});
+})
+
 // BUY FIDELS
-router.patch('/buy-fidels/:id', async (req, res) => {
+router.patch('/buy-fidels/:id', verifyLoginToken, async (req, res) => {
   try {
     // Validate request data
     const validateBuyData = companyBuyFidelValidationRequestPayload(req.body);
@@ -114,9 +173,7 @@ router.patch('/buy-fidels/:id', async (req, res) => {
       return res.status(400).send(validateCompanyData.error);
     }
 
-    const { id } = req.params;
-
-    const company = await Company.findById(id);
+    const company = await Company.findById(req.user._id);
 
     if (!company) {
       return res.status(400).send({
@@ -128,7 +185,6 @@ router.patch('/buy-fidels/:id', async (req, res) => {
 
     const buyFidelsTransaction = await buyFidels(privateKey, req.body.amount);
 
-    // @ TODO return not all data from transaction
     return res.status(200).send(buyFidelsTransaction);
 
   } catch(err) {
@@ -138,7 +194,7 @@ router.patch('/buy-fidels/:id', async (req, res) => {
 })
 
 // GET COMPANY BALANCE
-router.get('/balance/:id', async (req, res) => {
+router.get('/balance/:id', verifyLoginToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -154,8 +210,31 @@ router.get('/balance/:id', async (req, res) => {
 
     const companyBalance = await getBalance(publicKey);
 
-    // @ TODO return not all data from transaction
     return res.status(200).send(companyBalance);
+
+  } catch(err) {
+    console.log(err);
+    return res.status(400).send(err);
+  }
+})
+
+// GET COMPANIES
+router.get('/list', async (req, res) => {
+  try {
+    const companies = await Company
+      .find({
+      status: 'active',
+      stellarAcount: { $exists: true }
+      })
+      .select('-password -stellarAcount -status -nif');
+
+    if (!companies.length) {
+      return res.status(400).send({
+        message: 'No active companies in the platform',
+      });
+    };
+
+    return res.status(200).send(companies);
 
   } catch(err) {
     console.log(err);

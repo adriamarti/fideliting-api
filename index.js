@@ -2,11 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
-// Import 
-
 // Import Routes
-const companyRoute = require('./routes/company');
-const randomRoute = require('./routes/random');
+const companiesRoute = require('./routes/companies');
+// const randomRoute = require('./routes/random');
 
 // Add Express to App
 const app = express();
@@ -28,7 +26,7 @@ mongoose.connect(
 app.use(express.json());
 
 // Route Middlewares
-app.use('/api/company', companyRoute);
-app.use('/api/random', randomRoute);
+app.use('/api/companies', companiesRoute);
+// app.use('/api/random', randomRoute);
 
 app.listen(3000, () => console.log('Server up and running'))

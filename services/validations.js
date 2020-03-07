@@ -21,6 +21,15 @@ const companyRegisterConfirmationValidationRequestPayload = (data) => {
   return schema.validate(data);
 };
 
+const companyLoginValidationRequestPayload = (data) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }).required();
+
+  return schema.validate(data);
+};
+
 const companyBuyFidelValidationRequestPayload = (data) => {
   const schema = Joi.object({
     amount: Joi.string().required(),
@@ -82,6 +91,7 @@ const userLoginValidationRequestPayload = (data) => {
 module.exports = {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
+  companyLoginValidationRequestPayload,
   companyBuyFidelValidationRequestPayload,
   userRegisterValidationRequestPayload,
   userRegisterValidationPayload,

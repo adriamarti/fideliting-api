@@ -10,25 +10,23 @@ const {
 
 const createAccount = async () => {
   try {
-    // Tell the Stellar SDK you are using the testnet
-    // Network.useTestNetwork();
-    // point to testnet host
+    // Set Stellar Server
     const stellarServer = new Server(process.env.STELLAR_TEST_NET);
-  
-    // Never put values like the an account seed in code.
-    const provisionerKeyPair = Keypair.fromSecret(process.env.STELLAR_FIDEL_SECRET)
+    
+    // Get keyPair of provider fidel account (accoun responsable of sending FIDEL)
+    const providerFidel = Keypair.fromSecret(process.env.STELLAR_FIDEL_SECRET)
 
     // Creat New Stellar account
     const newAccount = Keypair.random();
 
     // Create sequence
-    const { sequence } = await stellarServer.accounts().accountId(provisionerKeyPair.publicKey()).call();
+    const { sequence } = await stellarServer.accounts().accountId(providerFidel.publicKey()).call();
 
-    // Fidel Account
-    const fidelAccount = new Account(provisionerKeyPair.publicKey(), sequence);
+    // Provider Fidel Account
+    const providerFidelAccount = new Account(providerFidel.publicKey(), sequence);
 
     // Create Transaction
-    const transaction = new TransactionBuilder(fidelAccount, {
+    const transaction = new TransactionBuilder(providerFidelAccount, {
       fee: BASE_FEE,
       networkPassphrase: Networks.TESTNET
       })
@@ -40,7 +38,7 @@ const createAccount = async () => {
       .build()
     
     // Sign transaction
-    transaction.sign(Keypair.fromSecret(provisionerKeyPair.secret()))
+    transaction.sign(Keypair.fromSecret(providerFidel.secret()))
     
     // Get Transaction
     const transactionData = await stellarServer.submitTransaction(transaction)
