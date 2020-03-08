@@ -2,13 +2,23 @@ const {
   Server, // Server handles the network connections.
 } = require('stellar-sdk');
 
-const getBalance = async (companyPublic) => {
+const getBalance = async (publicKey) => {
   try {
     const stellarServer = new Server(process.env.STELLAR_TEST_NET);
+    const assetCodes = ['FIDEL', 'SFIDEL'];
 
-    const companyAccount = await stellarServer.loadAccount(companyPublic);
+    const { balances } = await stellarServer.loadAccount(publicKey);
 
-    return companyAccount.balances;
+    const fidelitingBalances = balances
+      .filter(({ asset_code }) => assetCodes.includes(asset_code))
+      .reduce((acc, { asset_code, balance }) => {
+        return acc = {
+          ...acc,
+          [asset_code]: balance,
+        }
+      }, {})
+
+    return fidelitingBalances;
 
   } catch (err) {
     throw(err);

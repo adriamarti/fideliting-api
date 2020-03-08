@@ -38,15 +38,15 @@ const createAccount = async () => {
       .build()
     
     // Sign transaction
-    transaction.sign(Keypair.fromSecret(providerFidel.secret()))
+    transaction.sign(Keypair.fromSecret(providerFidel.secret()));
     
     // Get Transaction
-    const transactionData = await stellarServer.submitTransaction(transaction)
+    const transactionData = await stellarServer.submitTransaction(transaction);
 
     return {
       transactionData,
       publicKey: newAccount.publicKey(),
-      privateKey: newAccount.secret(),
+      secret: newAccount.secret(),
     }
 
   } catch (err) {

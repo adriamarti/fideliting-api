@@ -33,7 +33,11 @@ const copmanySchema = new mongoose.Schema({
     type: String, // active, inactive, banned
     required: true,
   },
-  stellarAcount: {
+  secret: {
+    type: String,
+    reuiqred: false,
+  },
+  publicKey: {
     type: String,
     required: false,
   }

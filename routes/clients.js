@@ -2,15 +2,9 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const Client = require('../models/Client');
 const {
-  companyRegisterValidationRequestPayload,
-  companyRegisterConfirmationValidationRequestPayload,
-  companyBuyFidelValidationRequestPayload,
-  companyLoginValidationRequestPayload,
   clientRegisterValidationRequestPayload,
   clientLoginValidationRequestPayload,
-  userRegisterValidationPayload,
-  userLoginValidationRequestPayload,
-  userConfirmRegisterValidationPayload,
+  clientTransactionToCompanyValidationRequestPayload,
 } = require('../services/validations');
 const {
   verifyRegisterToken,
@@ -18,16 +12,12 @@ const {
 } = require('../middlewares/verifyToken');
 const {
   getLoggedToken,
-  getStellarAccountToken,
   getRegistrationToken,
-  verifyToken,
 } = require('../services/token');
 const { sendConfirmRegistrationMail } = require('../services/send-mail');
 const { encrypt, decrypt } = require('../services/encryptation');
 const { createAccount } = require('../stellar/accounts');
-const { buyFidels } = require('../stellar/buy');
 const { getBalance } = require('../stellar/balance');
-const { getTransactions } = require('../stellar/transactions')
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -95,11 +85,12 @@ router.patch('/register-confirmation', verifyRegisterToken, async (req, res) => 
     }
 
     // Create Stellar Address
-    const { transactionData, publicKey, privateKey } = await createAccount();
+    const { transactionData, publicKey, secret } = await createAccount();
 
     const dataToUpdate = {
       status: 'active',
-      stellarAcount: getStellarAccountToken(publicKey, privateKey),
+      publicKey,
+      secret: encrypt(secret),
     }
 
     // Update Client Data
@@ -143,8 +134,7 @@ router.post('/login', async (req, res) => {
     const token = getLoggedToken(registeredClient._id);
 
     // Get Client balance
-    const { publicKey } = verifyToken(registeredClient.stellarAcount);
-    const balance = await getBalance(publicKey);
+    const balance = await getBalance(registeredClient.publicKey);
 
     // Remove password and stellarAccount from client data
     const { _id, email, name, location, nif, phone, sector } = registeredClient;
@@ -165,7 +155,47 @@ router.post('/login', async (req, res) => {
     console.log(err);
     return res.status(400).send(err);
   }
-  
+})
+
+// Transfer FIDELs to a company
+router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
+  try {
+    // Validate request data
+    const validateTransactionData = clientTransactionToCompanyValidationRequestPayload(req.body);
+    if (validateTransactionData.error) {
+      return res.status(400).send(validateTransactionData.error);
+    }
+
+    const client = await Client.findById(req.user._id);
+
+    if (!client) {
+      return res.status(400).send({
+        message: 'Client does not exist',
+      });
+    };
+
+    const company = await Client.findById(req.body.companyId);
+
+    if (!company) {
+      return res.status(400).send({
+        message: 'Company does not exist',
+      });
+    };
+
+    // Check if client have enough FIDELs
+    const clientBalances = await getBalance(client.publicKey);
+    if (+clientBalances.FIDELS < +req.body.amount) {
+      return res.status(400).send({
+        message: 'Client do not have engough Fidels',
+      });
+    }
+
+    //@TODO execute transaction 
+
+  } catch(err) {
+    console.log(err);
+    return res.status(400).send(err);
+  }
 })
 
 // GET CLIENTS
@@ -173,7 +203,7 @@ router.get('/list', async (req, res) => {
   try {
     const clients = await Client
       .find({ status: 'active' })
-      .select('-password -stellarAcount -status');
+      .select('-password -secret -status');
 
     if (!clients.length) {
       return res.status(400).send({
