@@ -1,12 +1,14 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const Company = require('../models/Company');
+const Client = require('../models/Client');
 const {
   companyRegisterValidationRequestPayload,
   companyRegisterConfirmationValidationRequestPayload,
   companyBuyFidelValidationRequestPayload,
   companyLoginValidationRequestPayload,
   companyGetTransactionsValidationRequestPayload,
+  companyTransactionToClientValidationRequestPayload,
 } = require('../services/validations');
 const {
   verifyRegisterToken,
@@ -20,6 +22,7 @@ const { sendConfirmRegistrationMail } = require('../services/send-mail');
 const { encrypt, decrypt } = require('../services/encryptation');
 const { createAccount } = require('../stellar/accounts');
 const { buyFidels } = require('../stellar/buy');
+const { transferFidels, transferSFidels } = require('../stellar/transferFidels');
 const { getBalance } = require('../stellar/balance');
 const { getTransactions } = require('../stellar/transactions');
 
@@ -154,7 +157,7 @@ router.post('/login', async (req, res) => {
     const transactions = await getTransactions(registeredCompany.publicKey);
 
     // Company data to be returned
-    const { _id, email, name, location, nif, phone, sector, publicKey } = registeredCompany;
+    const { _id, email, name, location, nif, phone, sector, publicKey, fideliting } = registeredCompany;
 
     console.log('---------------------------------------');
     console.log('Login Token');
@@ -166,7 +169,7 @@ router.post('/login', async (req, res) => {
       .cookie('login_fideliting_token', token, {
         expires: new Date(Date.now() + 24 * 3600000) // cookie will be removed after 24 hours
       })
-      .send({_id, email, name, location, nif, phone, sector, balance, publicKey, transactions});
+      .send({_id, email, name, location, nif, phone, sector, balance, publicKey, transactions, fideliting});
 
   } catch(err) {
     console.log(err);
@@ -201,7 +204,7 @@ router.patch('/buy-fidels/:id', verifyLoginToken, async (req, res) => {
   }
 })
 
-// BUY FIDELS
+// GET TRANSACTIONS OF A COMPANY
 router.get('/transactions/:id', verifyLoginToken, async (req, res) => {
   try {
     // Validate request data
@@ -230,11 +233,11 @@ router.get('/transactions/:id', verifyLoginToken, async (req, res) => {
   }
 })
 
-// Transfer FIDELs to a client
+// Transfer FIDEL to a client
 router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
   try {
     // Validate request data
-    const validateTransactionData = companyTransactionToCompanyValidationRequestPayload(req.body);
+    const validateTransactionData = companyTransactionToClientValidationRequestPayload(req.body);
     if (validateTransactionData.error) {
       return res.status(400).send(validateTransactionData.error);
     }
@@ -255,7 +258,7 @@ router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
       });
     };
 
-    // Check if company have enough FIDELs
+    // Check if company have enough FIDEL founds
     const companyBalances = await getBalance(company.publicKey);
     if (+companyBalances.FIDELS < +req.body.amount) {
       return res.status(400).send({
@@ -263,9 +266,31 @@ router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
       });
     }
 
-    const buyFidelsTransaction = await buyFidels(privateKey, req.body.amount);
+    // Transfer FIDEL to client
+    const fidelTransaction = await transferFidels(
+      decrypt(company.secret), decrypt(client.secret), req.body.amount);
+    
+    // Transfer SFIDEL to company
+    // const sFidelTransaction = transferSFidels(decrypt(company.secret), req.body.amount)
 
-    return res.status(200).send(buyFidelsTransaction);
+    // Update balance relation between company and client
+    const fideliting = company.fideliting ? company.fideliting : [];
+    const fidelitingIndexToUpdate = fideliting.findIndex(({ clientId }) => clientId === req.body.clientId)
+    if (fidelitingIndexToUpdate !== -1) {
+      fideliting[fidelitingIndexToUpdate] = {
+        ...fideliting[fidelitingIndexToUpdate],
+        balance: `${+req.body.amount + (+fideliting[fidelitingIndexToUpdate].balance)}`
+      }
+    } else {
+      fideliting.push({ clientId: client._id, balance: `${req.body.amount}`})
+    }
+
+    // Update Company Data
+    const query = { _id: req.user._id };
+    const update = { $set: { fideliting } };
+    const updatedCompany = await Company.updateOne(query, update);
+
+    return res.status(200).send({ updatedCompany, fidelTransaction });
 
   } catch(err) {
     console.log(err);

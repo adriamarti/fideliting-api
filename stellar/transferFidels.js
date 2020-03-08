@@ -7,15 +7,15 @@ const {
   TransactionBuilder, // Helps you construct transactions.
   BASE_FEE // Stellar default Fee Base
 } = require('stellar-sdk');
+const { S_FIDEL_RATIO_EXCHANGE } = require('../constants/economy')
 
-const buyFidels = async (companySecret, amount) => {
+const transferFidels = async (companySecret, clientSecret, amount) => {
   try {
-    const provisionerKeyPair = Keypair.fromSecret(process.env.STELLAR_FIDEL_SECRET);
-    const companyKeyPair = Keypair.fromSecret(companySecret);
-
     const stellarServer = new Server(process.env.STELLAR_TEST_NET);
 
-    const provisionerAccount = await stellarServer.loadAccount(provisionerKeyPair.publicKey());
+    const companyKeyPair = Keypair.fromSecret(companySecret);
+    const clientKeyPair = Keypair.fromSecret(clientSecret);
+    const provisionerAccount = await stellarServer.loadAccount(companyKeyPair.publicKey())
 
     const transactionBuilder = new TransactionBuilder(provisionerAccount, {
       fee: BASE_FEE,
@@ -24,19 +24,59 @@ const buyFidels = async (companySecret, amount) => {
 
     transactionBuilder.addOperation(Operation.changeTrust({ 
       asset: new Asset('FIDEL', process.env.STELLAR_FIDEL_PUBLIC),
-      source: companyKeyPair.publicKey(),
+      source: clientKeyPair.publicKey(),
     }));
     
     transactionBuilder.addOperation(Operation.payment({
       asset: new Asset('FIDEL', process.env.STELLAR_FIDEL_PUBLIC), 
-      destination: companyKeyPair.publicKey(),
+      destination: clientKeyPair.publicKey(),
       amount,
     }));
 
     transactionBuilder.setTimeout(180);
 
     const transaction = transactionBuilder.build();
-    transaction.sign(provisionerKeyPair);
+    transaction.sign(companyKeyPair);
+    transaction.sign(clientKeyPair);
+
+    const submittedTransaction = await stellarServer.submitTransaction(transaction);
+
+    return submittedTransaction;
+
+  } catch (err) {
+    console.log(err);
+    throw(err);
+  }
+}
+
+const transferSFidels = async (companySecret, amount) => {
+  try {
+    const stellarServer = new Server(process.env.STELLAR_TEST_NET);
+
+    const sFidelKeyPair = Keypair.fromSecret(process.env.STELLAR_S_FIDEL_SECRET);
+    const companyKeyPair = Keypair.fromSecret(companySecret);
+    const provisionerAccount = await stellarServer.loadAccount(sFidelKeyPair.publicKey())
+
+    const transactionBuilder = new TransactionBuilder(provisionerAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    });
+
+    transactionBuilder.addOperation(Operation.changeTrust({ 
+      asset: new Asset('SFIDEL', process.env.STELLAR_FIDEL_PUBLIC),
+      source: companyKeyPair.publicKey(),
+    }));
+
+    transactionBuilder.addOperation(Operation.payment({
+      asset: new Asset('FIDEL', process.env.STELLAR_FIDEL_PUBLIC), 
+      destination: companyKeyPair.publicKey(),
+      amount: `${+amount * S_FIDEL_RATIO_EXCHANGE}`,
+    }));
+
+    transactionBuilder.setTimeout(180);
+
+    const transaction = transactionBuilder.build();
+    transaction.sign(sFidelKeyPair);
     transaction.sign(companyKeyPair);
 
     const submittedTransaction = await stellarServer.submitTransaction(transaction);
@@ -44,10 +84,12 @@ const buyFidels = async (companySecret, amount) => {
     return submittedTransaction;
 
   } catch (err) {
+    console.log(err);
     throw(err);
   }
 }
 
 module.exports = {
-  buyFidels,
+  transferFidels,
+  transferSFidels,
 }

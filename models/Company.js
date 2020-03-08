@@ -30,7 +30,8 @@ const copmanySchema = new mongoose.Schema({
     required: false,
   },
   status: {
-    type: String, // active, inactive, banned
+    type: String,
+    enum: ['active', 'inactive', 'banned'],
     required: true,
   },
   secret: {
@@ -39,6 +40,10 @@ const copmanySchema = new mongoose.Schema({
   },
   publicKey: {
     type: String,
+    required: false,
+  },
+  fideliting: {
+    type: [Object],
     required: false,
   }
 }, {
