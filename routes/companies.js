@@ -271,26 +271,29 @@ router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
       decrypt(company.secret), decrypt(client.secret), req.body.amount);
     
     // Transfer SFIDEL to company
-    // const sFidelTransaction = transferSFidels(decrypt(company.secret), req.body.amount)
+    const sFidelTransaction = await transferSFidels(decrypt(company.secret), req.body.amount)
 
     // Update balance relation between company and client
     const fideliting = company.fideliting ? company.fideliting : [];
     const fidelitingIndexToUpdate = fideliting.findIndex(({ clientId }) => clientId === req.body.clientId)
     if (fidelitingIndexToUpdate !== -1) {
+      const balance = +req.body.amount + (+fideliting[fidelitingIndexToUpdate].balance);
       fideliting[fidelitingIndexToUpdate] = {
         ...fideliting[fidelitingIndexToUpdate],
-        balance: `${+req.body.amount + (+fideliting[fidelitingIndexToUpdate].balance)}`
+        balance,
       }
     } else {
-      fideliting.push({ clientId: client._id, balance: `${req.body.amount}`})
+      fideliting.push({ clientId: client._id, balance: +req.body.amount})
     }
+
+    console.log(fideliting)
 
     // Update Company Data
     const query = { _id: req.user._id };
     const update = { $set: { fideliting } };
     const updatedCompany = await Company.updateOne(query, update);
 
-    return res.status(200).send({ updatedCompany, fidelTransaction });
+    return res.status(200).send({ updatedCompany, fidelTransaction, sFidelTransaction });
 
   } catch(err) {
     console.log(err);

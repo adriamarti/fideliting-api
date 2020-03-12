@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const Client = require('../models/Client');
+const Company = require('../models/Company');
 const {
   clientRegisterValidationRequestPayload,
   clientLoginValidationRequestPayload,
@@ -174,7 +175,7 @@ router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
       });
     };
 
-    const company = await Client.findById(req.body.companyId);
+    const company = await Company.findById(req.body.companyId);
 
     if (!company) {
       return res.status(400).send({
@@ -190,7 +191,33 @@ router.patch('/transfer-fidels/:id', verifyLoginToken, async (req, res) => {
       });
     }
 
-    //@TODO execute transaction 
+    //@TODO execute transaction
+    const companies = await Company.find({
+      fideliting: { $all: [{ "$elemMatch" : { clientId: client._id.toString(), balance: { $gt: 0 } } }]}
+    })
+    // const totalAmountGivenToClient = companies.reduce((acc, current) => {
+    //   const getBalanceByClientId = current.find(({ clientId, balance }) => )
+    // })
+
+    // const compensationTransactions = Promise.all(
+    //   companies.map(async ({ secret, fideliting, _id }) => {
+    //     const balance = fideliting.find(({ clientId }) => clientId === client._id.toString())
+    //     const amountToTransfer = balance
+    //     return await transferFidels(decrypt(client.secret), decrypt(secret), )
+    //     const userId = await getIdFromUser(user)
+    //     console.log(userId)
+  
+    //     const capitalizedId = await capitalizeIds(userId)
+    //     console.log(capitalizedId)
+    //   })
+    // )
+
+    // Transfer FIDEL to client
+    // const fidelTransaction = await transferFidels(
+    //   decrypt(company.secret), decrypt(client.secret), req.body.amount);
+
+    console.log(companies)
+    return res.status(200).send(companies);
 
   } catch(err) {
     console.log(err);

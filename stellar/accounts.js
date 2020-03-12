@@ -26,16 +26,19 @@ const createAccount = async () => {
     const providerFidelAccount = new Account(providerFidel.publicKey(), sequence);
 
     // Create Transaction
-    const transaction = new TransactionBuilder(providerFidelAccount, {
+    const transactionBuilder = new TransactionBuilder(providerFidelAccount, {
       fee: BASE_FEE,
       networkPassphrase: Networks.TESTNET
       })
-      .addOperation(Operation.createAccount({
-        destination: newAccount.publicKey(),
-        startingBalance: '1.6'
-      }))
-      .setTimeout(30)
-      .build()
+
+    transactionBuilder.addOperation(Operation.createAccount({
+      destination: newAccount.publicKey(),
+      startingBalance: '10'
+    }))
+
+    transactionBuilder.setTimeout(30);
+
+    const transaction = transactionBuilder.build();
     
     // Sign transaction
     transaction.sign(Keypair.fromSecret(providerFidel.secret()));

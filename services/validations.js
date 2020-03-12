@@ -78,7 +78,7 @@ const clientLoginValidationRequestPayload = (data) => {
 
 const clientTransactionToCompanyValidationRequestPayload = (data) => {
   const schema = Joi.object({
-    companyId: Joi.string().email().required(),
+    companyId: Joi.string().required(),
     amount: Joi.string().required(),
   }).required();
 
