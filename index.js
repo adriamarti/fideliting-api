@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cron = require('node-cron');
 
 // Import Routes
 const companiesRoute = require('./routes/companies');
@@ -21,6 +22,11 @@ mongoose.connect(
   },
   () => console.log('Connected to our Data Base'),
 );
+
+// Cron Job
+cron.schedule('*/1 * * * *', () => {
+  console.log(new Date());
+});
 
 // Middlewares
 app.use(express.json());
