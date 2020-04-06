@@ -1,0 +1,59 @@
+/*
+console.log("inicio consulta balance");
+var StellarSdk = require('stellar-sdk');
+const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
+
+//Cuenta FIDEL
+const FidelSecret = 'SBM4GTFCSOWQVVYB4ABGRTKSG6S57ILORUUZZD63PK54WP4Y5TECOFCQ';
+const FidelPublic = 'GCXHV7JDD5EDPR5VNM3OWIRRICPEKA73LYZIWABHDKSGREHLGZ6F5TOR';
+
+//Cuenta SFIDEL
+const sFidelSecret = 'SDJ2PC6VRCD6EZ2J5WSARGX3YOARPS73P4RJ532BTYQ6OXGQGYZGSRV7';
+const sFidelPublic = 'GBOIBL7R2QG5I2MWSH4AFBIFRQ5MAXMEZEVIVMT5ZP2HOD4H3CFFRSWE';
+
+//Cuenta COMPENSATORIA
+const CompensaSecret = 'SDBU5PYDDD6ZUQFW53AOMP2NBP5OOHXPYR6LGB26ALMA4GN6P6RFTBVD';
+const CompensaPublic = 'GC63X7GK7ES5BB6GE3Z3SBZHBFUQEXOTVHMR5JVBB2RTUTT4UTL34OXU';
+
+//Cuenta sociedad fideliting
+CtaCiaFIDELITINGSecr = 'SCUUURKD2UJC2ZSLRQMDGGCQ3ORESTQJ5ZXI7NU7GT65UDLPGMKDIQ36';
+CtaCiaFIDELITINGPubl = 'GDYFWPNPZQI3SEY4NWDHE6TLLC66JETIEI5BKS32NYOT626PFSGPYL4P';
+
+//Cuenta comercio1
+CtaComercio1Secr = 'SAZVZEUVSWO2R7EDRKV4C4SCFORQVHDYJ4H4NYBRMYTIQQV6FVYO6QQN';
+CtaComercio1Publ = 'GCTK5BZCQPXN6EGXZHJPOVPFGTXLMPGNJW5ZFHUPEHKZ42N5EG4QVPWN';
+
+//Cuenta comercio2
+CtaComercio2Secr = 'SBPIRTMNOE5K7EMVZQSFAWPKBYB6F63PSCTMUIIIP45PBBYWGPPCHZU3';
+CtaComercio2Publ = 'GAOV7XX65C4NDUGN2LQSKMEPDGHONKBWCOCD45NP37J4SCYNOKBROVV6';
+
+//Cuenta comercio3
+CtaComercio3Secr = 'SAMWURQXW24XITBSODGNADDJWL2AGJB5Y6MW23S47HIGOAMG7GY7SCOH';
+CtaComercio3Publ = 'GCPDDFLRQEELJOLSNSGABJQ63M7W35O62S7IKDJBGP3X255LO3GMZ3PY';
+
+//Cuenta cliente1
+const Clt1Secret = 'SDEG5XH5DZKZ3KUU5VGTTMJ375HEXN3KSBSU664SVDCLXRXLYTKIBCK2';
+const Clt1Public = 'GADTUAMIK6IFZEL6H24LHLXXCN7GO7A4PQNKVRPBXOL444TXISFWB6E6';
+
+//Cuenta cliente2
+const Clt2Secret = 'SBXP7VMUI6YVU6BENDOPXELS6HOERIHI52EIEMWJOSZINHFKAXTL5S4R';
+const Clt2Public = 'GCUZECQIWYSCIH6IMSL6RPJZTUFHXJ2CDKONA4TGQRUZ2EFGEZJF47BK';
+
+//Cuenta cliente3
+const Clt3Secret = '';
+const Clt3Public = '';
+
+
+// dato de entrada
+let CTApublic = CompensaPublic;
+
+
+(async function main1() {
+    // the JS SDK uses promises for most actions, such as retrieving an account
+    let account = await server.loadAccount(CTApublic);
+    console.log("Balances for account: " + CTApublic);
+    account.balances.forEach(function(balance) {
+      console.log("Type:", balance.asset_type, ", Balance:", balance.balance, ", asset :" , balance.asset_code);
+    });
+})();
+*/
