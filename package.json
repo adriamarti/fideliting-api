@@ -26,7 +26,7 @@
     "lodash": "^4.17.15",
     "mongoose": "^5.7.14",
     "node-cron": "^2.0.3",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "stellar-sdk": "^3.3.0"
   },
   "devDependencies": {
